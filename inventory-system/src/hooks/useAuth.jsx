@@ -23,7 +23,10 @@ export const useAuth = () => {
           'X-Tenant-ID': tenantId,
         },
       });
-      setUser(response.data);
+      const userData = response.data;
+      console.log('Fetched user:', userData);
+      userData.modules = JSON.parse(userData.modules); // Parse the modules field
+      setUser(userData);
     } catch (error) {
       console.error('Error fetching user:', error);
       logout();

@@ -1,5 +1,3 @@
-// src/components/UsersCrud.jsx
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SideMenu from './SideMenu';
@@ -9,7 +7,7 @@ import { useAuthContext } from '../context/AuthProvider';
 
 const UsersCrud = () => {
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ name: '', password: '' });
+  const [form, setForm] = useState({ name: '', password: '', modules: [] });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -37,8 +35,17 @@ const UsersCrud = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      setForm((prevForm) => {
+        const modules = checked
+          ? [...prevForm.modules, value]
+          : prevForm.modules.filter((module) => module !== value);
+        return { ...prevForm, modules };
+      });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -50,7 +57,7 @@ const UsersCrud = () => {
       } else {
         await axios.post(`http://localhost:5000/users?tenantId=${tenantId}`, form, { headers: { Authorization: `Bearer ${token}` } });
       }
-      setForm({ name: '', password: '' });
+      setForm({ name: '', password: '', modules: [] });
       setIsEditing(false);
       setEditingId(null);
       setShowModal(false);
@@ -61,7 +68,7 @@ const UsersCrud = () => {
   };
 
   const handleEdit = (user) => {
-    setForm({ name: user.name, password: '' }); // Password will be updated separately
+    setForm({ name: user.name, password: '', modules: JSON.parse(user.modules) }); // Password will be updated separately
     setIsEditing(true);
     setEditingId(user.id);
     setShowModal(true);
@@ -104,7 +111,7 @@ const UsersCrud = () => {
             <tbody>
               {users.map(user => (
                 <tr key={user.id} className="hover:bg-gray-300">
-                                    <td className="px-5 py-5 border-b border-gray-800 text-sm">
+                  <td className="px-5 py-5 border-b border-gray-800 text-sm">
                     {user.name}
                   </td>
                   <td className="px-5 py-5 border-b border-gray-800 text-sm">
@@ -164,6 +171,26 @@ const UsersCrud = () => {
                       required
                     />
                   </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Modules</label>
+                    <div className="flex flex-wrap">
+                      {['Dashboard', 'Products', 'Manage Inventory', 'Manage Stocks', 'All Stocks', 'Sold Stocks', 'Monthly & Yearly Profits', 'Users', 'Audit Logs'].map((module) => (
+                        <div key={module} className="mr-4 mb-2">
+                          <label className="inline-flex items-center">
+                            <input
+                              type="checkbox"
+                              name="modules"
+                              value={module}
+                              checked={form.modules.includes(module)}
+                              onChange={handleChange}
+                              className="form-checkbox h-5 w-5 text-green-600"
+                            />
+                            <span className="ml-2 text-gray-700">{module}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="submit"
@@ -190,3 +217,4 @@ const UsersCrud = () => {
 };
 
 export default UsersCrud;
+

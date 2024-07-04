@@ -11,10 +11,9 @@ const AdminPanel = () => {
   const [username, setUsername] = useState('');
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalSold, setTotalSold] = useState(0);
-  const [totalProfit, setTotalProfit] = useState(0);
   const [monthlySales, setMonthlySales] = useState([]);
   const [soldItems, setSoldItems] = useState([]);
-  const [yearlyProfits, setYearlyProfits] = useState([]);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +24,7 @@ const AdminPanel = () => {
 
     fetchUserDetails();
     fetchDashboardData();
-    fetchYearlyProfits();
+    
   }, [navigate, user, tenantId]);
 
   const fetchUserDetails = async () => {
@@ -55,30 +54,19 @@ const AdminPanel = () => {
         axios.get('http://localhost:5000/profits/yearly-all', { headers }),
         axios.get('http://localhost:5000/profits/monthly', { headers }),
       ]);
-
+  
       setTotalProducts(productsResponse.data.length);
       setTotalSold(soldResponse.data.soldItems.length);
-      setTotalProfit(profitResponse.data.total_profit || 0);
+     
       setMonthlySales(Array.isArray(monthlySalesResponse.data) ? monthlySalesResponse.data : []);
       setSoldItems(soldResponse.data.soldItems);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
   };
+  
 
-  const fetchYearlyProfits = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/profits/yearly-all', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'X-Tenant-ID': tenantId,
-        },
-      });
-      setYearlyProfits(response.data);
-    } catch (error) {
-      console.error('Error fetching yearly profits:', error);
-    }
-  };
+ 
 
   return (
     <div className="flex">
@@ -88,9 +76,7 @@ const AdminPanel = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <InfoCard title="Total Products" value={totalProducts} color="bg-green-600" />
           <InfoCard title="Total Sold" value={totalSold} color="bg-yellow-400" />
-          {yearlyProfits.map((yearProfit, index) => (
-            <InfoCard key={index} title={`Total Profit in ${yearProfit.year}`} value={`GHC ${yearProfit.total_profit.toFixed(2)}`} color="bg-purple-600" />
-          ))}
+          
           <InfoCard title="Monthly Sales" value={monthlySales.length} color="bg-red-600" />
         </div>
         <div className="mb-6">

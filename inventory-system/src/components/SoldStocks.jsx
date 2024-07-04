@@ -73,18 +73,8 @@ const SoldStocks = () => {
     <section className="flex">
       <SideMenu username={username} />
       <div className="pt-20 h-screen overflow-auto container mx-auto p-8">
-        <h2 className="text-4xl font-bold mb-4">Sold Stocks</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className={`p-4 rounded shadow-lg text-white ${getRandomColor()}`}>
-            <h2 className="text-2xl font-bold mb-4">Total Profit: GHC {totalProfit.toFixed(2)}</h2>
-          </div>
-          <div className={`p-4 rounded shadow-lg text-white ${getRandomColor()}`}>
-            <h2 className="text-2xl font-bold mb-4">Weekly Profit: GHC {weeklyProfit.toFixed(2)}</h2>
-          </div>
-          <div className={`p-4 rounded shadow-lg text-white ${getRandomColor()}`}>
-            <h2 className="text-2xl font-bold mb-4">Monthly Profit: GHC {monthlyProfit.toFixed(2)}</h2>
-          </div>
-        </div>
+        <h2 className="text-4xl font-bold mb-4">Details of Sold Stocks</h2>
+        
         <div>
           <h2 className="text-2xl font-bold mb-4">Sold Stocks List</h2>
           <div className="overflow-x-auto mb-20  w-full leading-normal shadow-md rounded-lg">

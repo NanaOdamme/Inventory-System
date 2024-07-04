@@ -15,19 +15,19 @@ const Home = () => {
       
         <header className="bg-green-900 shadow-lg text-white p-4 text-center">
           <h1 className="text-2xl">Welcome to The Poultry Farm Inventory Manager</h1>
+          <Link to="/login" className="text-blue-400 hover:text-blue-600">Already Registerd? Login</Link>
         </header>
       
-
-            <h1>Register Here</h1>
-            <Link to='/register'>
-            Register
+            <div className=' mx-auto flex justify-center p-20 m-20'>
+            <Link to="/register" className="bg-green-400 p-3 rounded-lg shadow-lg font-medium text-white mt-20 hover:bg-green-600">
+            Register Here
             </Link>
-
+            </div>
 
       <footer className="bottom-0 absolute w-full bg-green-950 text-white p-4 text-center mt-8">
         <p>&copy; {new Date().getFullYear()} inventory-manager. All rights reserved.</p>
         <p>Created by: Nana Akosua Odame</p>
-        <a href="/login" className="text-blue-400 hover:text-blue-600">Admin Panel</a>
+        <Link to="/login" className="text-blue-400 hover:text-blue-600">Admin Panel</Link>
       </footer>
       </section>
       </>

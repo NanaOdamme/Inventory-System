@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { useAuthContext } from '../context/AuthProvider';
 
 const SideMenu = ({ username }) => {
+  const { user } = useAuthContext();
   const [isMenuVisible, setIsMenuVisible] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
@@ -21,6 +23,10 @@ const SideMenu = ({ username }) => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const hasAccess = (module) => {
+    return user && user.modules && user.modules.includes(module);
+  };
+
   return (
     <>
       <button
@@ -37,46 +43,68 @@ const SideMenu = ({ username }) => {
             <Link to="/" className="hover:bg-green-700 p-2 rounded flex items-center">
               <i className="bi bi-house-door-fill mr-2"></i> Home (FrontEnd)
             </Link>
-            <Link to="/admin" className="hover:bg-green-700 p-2 rounded flex items-center">
-              <i className="bi bi-speedometer2 mr-2"></i> Dashboard
-            </Link>
-            <Link to="/admin/products" className="hover:bg-green-700 p-2 rounded flex items-center">
-              <i className="bi bi-box-seam mr-2"></i> Products
-            </Link>
-            <div className="relative">
-              <button
-                onClick={toggleDropdown}
-                className="hover:bg-green-700 p-2 rounded w-full text-left flex justify-between items-center"
-              >
-                <span className="flex items-center">
-                  <i className="bi bi-boxes mr-2"></i> Inventories
-                </span>
-                <i className={`bi bi-caret-${isDropdownOpen ? 'up' : 'down'}-fill`}></i>
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-full bg-green-800 rounded shadow-lg z-10">
-                  <Link to="/admin/inventory" className="block hover:bg-green-700 p-2 rounded flex items-center">
-                    <i className="bi bi-box-arrow-in-right mr-2"></i> Manage Inventory
-                  </Link>
-                  <Link to="/admin/manage-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
-                    <i className="bi bi-boxes mr-2"></i> Manage Stocks
-                  </Link>
-                  <Link to="/admin/all-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
-                    <i className="bi bi-box mr-2"></i> All Stocks
-                  </Link>
-                  <Link to="/admin/sold-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
-                    <i className="bi bi-box-arrow-in-left mr-2"></i> Sold Stocks
-                  </Link>
-                  <Link to="/admin/monthly-yearly-profits" className="hover:bg-green-700 p-2 rounded flex items-center">
-                    <i className="bi bi-bar-chart-line-fill mr-2"></i> Monthly & Yearly Profits
-                  </Link>
-                </div>
-              )}
-            </div>
-            <Link to="/admin/users" className="hover:bg-green-700 p-2 rounded flex items-center">
-              <i className="bi bi-people-fill mr-2"></i> Users
-            </Link>
-            
+            {hasAccess('Dashboard') && (
+              <Link to="/admin" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-speedometer2 mr-2"></i> Dashboard
+              </Link>
+            )}
+            {hasAccess('Products') && (
+              <Link to="/admin/products" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-box-seam mr-2"></i> Products
+              </Link>
+            )}
+            {hasAccess('Manage Inventory') && (
+              <div className="relative">
+                <button
+                  onClick={toggleDropdown}
+                  className="hover:bg-green-700 p-2 rounded w-full text-left flex justify-between items-center"
+                >
+                  <span className="flex items-center">
+                    <i className="bi bi-boxes mr-2"></i> Inventories
+                  </span>
+                  <i className={`bi bi-caret-${isDropdownOpen ? 'up' : 'down'}-fill`}></i>
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-full bg-green-800 rounded shadow-lg z-10">
+                    {hasAccess('Manage Inventory') && (
+                      <Link to="/admin/inventory" className="block hover:bg-green-700 p-2 rounded flex items-center">
+                        <i className="bi bi-box-arrow-in-right mr-2"></i> Manage Inventory
+                      </Link>
+                    )}
+                    {hasAccess('Manage Stocks') && (
+                      <Link to="/admin/manage-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
+                        <i className="bi bi-boxes mr-2"></i> Manage Stocks
+                      </Link>
+                    )}
+                    {hasAccess('All Stocks') && (
+                      <Link to="/admin/all-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
+                        <i className="bi bi-box mr-2"></i> All Stocks
+                      </Link>
+                    )}
+                    {hasAccess('Sold Stocks') && (
+                      <Link to="/admin/sold-stocks" className="block hover:bg-green-700 p-2 rounded flex items-center">
+                        <i className="bi bi-box-arrow-in-left mr-2"></i> Sold Stocks
+                      </Link>
+                    )}
+                    {hasAccess('Monthly & Yearly Profits') && (
+                      <Link to="/admin/monthly-yearly-profits" className="hover:bg-green-700 p-2 rounded flex items-center">
+                        <i className="bi bi-bar-chart-line-fill mr-2"></i> Monthly & Yearly Profits
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {hasAccess('Users') && (
+              <Link to="/admin/users" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-people-fill mr-2"></i> Users
+              </Link>
+            )}
+            {hasAccess('Audit Logs') && (
+              <Link to="/admin/audit-logs" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-clipboard-data mr-2"></i> Audit Logs
+              </Link>
+            )}
             <button onClick={handleLogout} className="hover:bg-green-700 p-2 rounded text-left flex items-center">
               <i className="bi bi-box-arrow-right mr-2"></i> Logout
             </button>
@@ -88,4 +116,3 @@ const SideMenu = ({ username }) => {
 };
 
 export default SideMenu;
-
