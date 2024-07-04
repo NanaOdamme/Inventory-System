@@ -14,10 +14,11 @@ const ManageStock = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    const tenantId = localStorage.getItem('tenantId');
+    if (!token || !tenantId) {
       navigate('/login');
     } else {
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } })
         .then(response => {
           setUsername(response.data.name);
         })
@@ -31,8 +32,9 @@ const ManageStock = () => {
 
   const fetchInventory = async () => {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
     try {
-      const response = await axios.get('http://localhost:5000/inventory', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/inventory', { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } });
       setInventory(response.data);
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -41,8 +43,9 @@ const ManageStock = () => {
 
   const moveToNotInStock = async (item) => {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
     try {
-      await axios.post('http://localhost:5000/inventory/not-in-stock', item, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post('http://localhost:5000/inventory/not-in-stock', item, { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } });
       fetchInventory();
     } catch (error) {
       console.error('Error moving stock to not in stock:', error);
@@ -51,6 +54,7 @@ const ManageStock = () => {
 
   const moveToSold = async (item) => {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
     const quantity = quantitySold[item.id];
     const sale_date = saleDates[item.id];
     if (!quantity || quantity <= 0 || quantity > item.quantity) {
@@ -63,7 +67,7 @@ const ManageStock = () => {
     }
     const total_price = item.price_per_unit * quantity;
     try {
-      await axios.post('http://localhost:5000/inventory/sold', { ...item, quantity, total_price, sale_date }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post('http://localhost:5000/inventory/sold', { ...item, quantity, total_price, sale_date }, { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } });
       fetchInventory();
     } catch (error) {
       console.error('Error moving stock to sold:', error);

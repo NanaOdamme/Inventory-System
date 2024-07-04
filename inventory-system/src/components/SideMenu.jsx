@@ -9,6 +9,7 @@ const SideMenu = ({ username }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('tenantId'); // Remove tenant ID on logout
     navigate('/login');
   };
 
@@ -24,12 +25,12 @@ const SideMenu = ({ username }) => {
     <>
       <button
         onClick={toggleMenuVisibility}
-        className="rounded-lg  shadow-lg font-bold px-2 m-2 bg-green-900 text-white fixed top-0 left-0 z-20"
+        className="rounded-lg shadow-lg font-bold px-2 m-2 bg-green-900 text-white fixed top-0 left-0 z-20"
       >
         <i className={`bi ${isMenuVisible ? 'bi-x' : 'bi-list'}`} style={{ fontSize: '1.5rem' }}></i>
       </button>
       {isMenuVisible && (
-        <div className="pt-16 bg-green-900 text-white w-64 h-screen p-4  top-0 left-0 z-10">
+        <div className="pt-16 bg-green-900 text-white w-64 h-screen p-4 top-0 left-0 z-10">
           <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
           <p className="mb-4">Welcome, {username}!</p>
           <nav className="flex flex-col space-y-4">
@@ -42,7 +43,6 @@ const SideMenu = ({ username }) => {
             <Link to="/admin/products" className="hover:bg-green-700 p-2 rounded flex items-center">
               <i className="bi bi-box-seam mr-2"></i> Products
             </Link>
-
             <div className="relative">
               <button
                 onClick={toggleDropdown}
@@ -73,13 +73,10 @@ const SideMenu = ({ username }) => {
                 </div>
               )}
             </div>
-
             <Link to="/admin/users" className="hover:bg-green-700 p-2 rounded flex items-center">
               <i className="bi bi-people-fill mr-2"></i> Users
             </Link>
-            <Link to="/register" className="hover:bg-green-700 p-2 rounded flex items-center">
-              <i className="bi bi-person-plus-fill mr-2"></i> Register User
-            </Link>
+            
             <button onClick={handleLogout} className="hover:bg-green-700 p-2 rounded text-left flex items-center">
               <i className="bi bi-box-arrow-right mr-2"></i> Logout
             </button>
@@ -91,3 +88,4 @@ const SideMenu = ({ username }) => {
 };
 
 export default SideMenu;
+

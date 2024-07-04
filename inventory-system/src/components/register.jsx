@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import SideMenu from './SideMenu';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const RegisterForm = () => {
-  const [username, setUsername] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ name: '', password: '' });
+  const [tenantId, setTenantId] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -18,85 +16,70 @@ const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/register', formData);
-      alert('Registration successful! You can now log in.');
-      navigate('/login');
+      const response = await axios.post('http://localhost:5000/register', formData);
+      alert('Registration successful! Your Tenant ID is: ' + response.data.tenantId);
+      setTenantId(response.data.tenantId);
     } catch (error) {
       alert('Registration failed: ' + error.response.data.message);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prevShow) => !prevShow);
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    } else {
-      // Assuming you have a backend endpoint to get user details from the token
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
-        .then(response => {
-          setUsername(response.data.name);
-        })
-        .catch(error => {
-          console.error('Error fetching user details:', error);
-          navigate('/login');
-        });
-    }
-  }, [navigate]);
   return (
-    <section className='flex'>
-      <SideMenu username={username} />
-      <section className='p-6 flex-grow'>
-        <p className='text-2xl m-5'>
-          Register a new user
-        </p>
-        <br />
-      
-      <section className='App-body bg-green-700 mx-auto w-96 rounded mt-10 p-5'>
-        <form className='p-2' onSubmit={handleSubmit}>
-          <h1 className='text-white text-2xl font-bold text-center mb-4'>Register</h1>
-          <div className="flex justify-center p-3">
-            <label htmlFor="name" className='mx-2 font-bold text-2xl text-white bg-zinc-700 p-2 rounded'>
-              <i className="bi bi-person"></i>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-r from-green-400 to-blue-500">
+      <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Register</h1>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">
+              Username
             </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className='p-2 font-bold w-full rounded'
-              required
-            />
+            <div className="flex items-center">
+              <i className="bi bi-person text-2xl mr-2 text-gray-700"></i>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+              />
+            </div>
           </div>
-          <div className="flex justify-center p-3 relative">
-            <label htmlFor="password" className='mx-2 font-bold text-2xl text-white bg-zinc-700 p-2 rounded'>
-              <i className="bi bi-lock-fill"></i>
+          <div className="mb-6">
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+              Password
             </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="p-2 rounded w-full font-bold"
-              required
-            />
-            <i
-              className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} absolute right-6 top-6 cursor-pointer`}
-              onClick={togglePasswordVisibility}
-            ></i>
+            <div className="flex items-center relative">
+              <i className="bi bi-lock-fill text-2xl mr-2 text-gray-700"></i>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+              />
+            </div>
           </div>
-          <div className="flex justify-center p-2 mt-5">
-            <button type="submit" className='w-1/2 text-white bg-zinc-800 p-2 rounded font-bold hover:bg-zinc-900'>Register User</button>
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              Register
+            </button>
           </div>
         </form>
-      </section>
-      </section>
-      </section>
+        {tenantId && (
+          <div className="mt-4 text-center">
+            <p>Your Tenant ID: <strong>{tenantId}</strong></p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
+
 export default RegisterForm;

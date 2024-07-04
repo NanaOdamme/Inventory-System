@@ -13,10 +13,11 @@ const MonthlyYearlyProfits = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    const tenantId = localStorage.getItem('tenantId');
+    if (!token || !tenantId) {
       navigate('/login');
     } else {
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } })
         .then(response => {
           setUsername(response.data.name);
         })
@@ -31,8 +32,9 @@ const MonthlyYearlyProfits = () => {
 
   const fetchMonthlyProfits = async () => {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
     try {
-      const response = await axios.get('http://localhost:5000/profits/monthly-all', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/profits/monthly-all', { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } });
       setMonthlyProfits(response.data);
     } catch (error) {
       console.error('Error fetching monthly profits:', error);
@@ -41,8 +43,9 @@ const MonthlyYearlyProfits = () => {
 
   const fetchYearlyProfits = async () => {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
     try {
-      const response = await axios.get('http://localhost:5000/profits/yearly-all', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/profits/yearly-all', { headers: { Authorization: `Bearer ${token}`, 'X-Tenant-ID': tenantId } });
       setYearlyProfits(response.data);
     } catch (error) {
       console.error('Error fetching yearly profits:', error);

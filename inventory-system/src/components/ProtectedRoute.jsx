@@ -2,17 +2,17 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../context/AuthProvider'; // If using AuthProvider
+import { useAuthContext } from '../context/AuthProvider';
 
 export default function ProtectedRoute({ children }) {
-  const user = useAuthContext(); // If using AuthProvider
+  const { user, tenantId } = useAuthContext();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user === null) {
+    if (user === null || tenantId === null) {
       navigate('/login', { replace: true });
     }
-  }, [navigate, user]);
+  }, [navigate, user, tenantId]);
 
-  return user ? children : null;
+  return user && tenantId ? children : null;
 }

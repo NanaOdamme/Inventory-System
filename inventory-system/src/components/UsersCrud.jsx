@@ -1,11 +1,13 @@
+// src/components/UsersCrud.jsx
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SideMenu from './SideMenu';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { useAuthContext } from '../context/AuthProvider';
 
 const UsersCrud = () => {
-  const [username, setUsername] = useState('');
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ name: '', password: '' });
   const [isEditing, setIsEditing] = useState(false);
@@ -13,31 +15,24 @@ const UsersCrud = () => {
   const [showModal, setShowModal] = useState(false);
 
   const navigate = useNavigate();
+  const { user, tenantId, logout } = useAuthContext();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
     } else {
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
-        .then(response => {
-          setUsername(response.data.name);
-        })
-        .catch(error => {
-          console.error('Error fetching user details:', error);
-          navigate('/login');
-        });
+      fetchUsers(token, tenantId);
     }
-    fetchUsers();
-  }, [navigate]);
+  }, [navigate, tenantId]);
 
-  const fetchUsers = async () => {
-    const token = localStorage.getItem('token');
+  const fetchUsers = async (token, tenantId) => {
     try {
-      const response = await axios.get('http://localhost:5000/users', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get(`http://localhost:5000/users?tenantId=${tenantId}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      if (error.response.status === 401) logout();
     }
   };
 
@@ -51,15 +46,15 @@ const UsersCrud = () => {
     const token = localStorage.getItem('token');
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/users/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`http://localhost:5000/users/${editingId}?tenantId=${tenantId}`, form, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        await axios.post('http://localhost:5000/users', form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post(`http://localhost:5000/users?tenantId=${tenantId}`, form, { headers: { Authorization: `Bearer ${token}` } });
       }
       setForm({ name: '', password: '' });
       setIsEditing(false);
       setEditingId(null);
       setShowModal(false);
-      fetchUsers();
+      fetchUsers(token, tenantId);
     } catch (error) {
       console.error('Error saving user:', error);
     }
@@ -75,8 +70,8 @@ const UsersCrud = () => {
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://localhost:5000/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      fetchUsers();
+      await axios.delete(`http://localhost:5000/users/${id}?tenantId=${tenantId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchUsers(token, tenantId);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -84,7 +79,7 @@ const UsersCrud = () => {
 
   return (
     <section className="flex">
-      <SideMenu username={username} />
+      <SideMenu username={user?.name} />
       <div className="h-screen overflow-auto container mx-auto p-8">
         <h2 className="text-4xl font-bold mb-4">Manage Users</h2>
         <button
@@ -109,7 +104,7 @@ const UsersCrud = () => {
             <tbody>
               {users.map(user => (
                 <tr key={user.id} className="hover:bg-gray-300">
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">
+                                    <td className="px-5 py-5 border-b border-gray-800 text-sm">
                     {user.name}
                   </td>
                   <td className="px-5 py-5 border-b border-gray-800 text-sm">

@@ -37,7 +37,7 @@ const SoldStocks = () => {
     try {
       const response = await axios.get('http://localhost:5000/sold', { headers: { Authorization: `Bearer ${token}` } });
       setSoldStocks(response.data.soldItems);
-      setTotalProfit(response.data.totalProfit);
+      setTotalProfit(response.data.totalProfit || 0);
     } catch (error) {
       console.error('Error fetching sold stocks:', error);
     }
@@ -47,7 +47,7 @@ const SoldStocks = () => {
     const token = localStorage.getItem('token');
     try {
       const response = await axios.get('http://localhost:5000/profits/weekly', { headers: { Authorization: `Bearer ${token}` } });
-      setWeeklyProfit(response.data.total_profit);
+      setWeeklyProfit(response.data.total_profit || 0);
     } catch (error) {
       console.error('Error fetching weekly profit:', error);
     }
@@ -57,7 +57,7 @@ const SoldStocks = () => {
     const token = localStorage.getItem('token');
     try {
       const response = await axios.get('http://localhost:5000/profits/monthly', { headers: { Authorization: `Bearer ${token}` } });
-      setMonthlyProfit(response.data.total_profit);
+      setMonthlyProfit(response.data.total_profit || 0);
     } catch (error) {
       console.error('Error fetching monthly profit:', error);
     }
@@ -88,31 +88,30 @@ const SoldStocks = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4">Sold Stocks List</h2>
           <div className="overflow-x-auto mb-20  w-full leading-normal shadow-md rounded-lg">
-       
-          <table className="min-w-full leading-normal shadow-md rounded-lg overflow-hidden">
-            <thead>
-              <tr>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Product Type</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Size</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Price per Unit</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Quantity</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Total Price</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Sale Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {soldStocks.map(item => (
-                <tr key={item.id} className="hover:bg-gray-300">
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.product_type}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.size}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.price_per_unit}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.quantity}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">GHC {item.total_price.toFixed(2)}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{new Date(item.sale_date).toLocaleDateString()}</td>
+            <table className="min-w-full leading-normal shadow-md rounded-lg overflow-hidden">
+              <thead>
+                <tr>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Product Type</th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Size</th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Price per Unit</th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Quantity</th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Total Price</th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Sale Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {soldStocks.map(item => (
+                  <tr key={item.id} className="hover:bg-gray-300">
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.product_type}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.size}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.price_per_unit}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.quantity}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">GHC {item.total_price.toFixed(2)}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{new Date(item.sale_date).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

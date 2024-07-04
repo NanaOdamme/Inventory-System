@@ -3,10 +3,11 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import SideMenu from './SideMenu';
 import InfoCard from './InfoCard';
-import BarChart from './BarChart';
 import DataTable from './DataTable';
+import { useAuthContext } from '../context/AuthProvider';
 
 const AdminPanel = () => {
+  const { user, tenantId } = useAuthContext();
   const [username, setUsername] = useState('');
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalSold, setTotalSold] = useState(0);
@@ -17,33 +18,42 @@ const AdminPanel = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!user || !tenantId) {
       navigate('/login');
-    } else {
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
-        .then(response => {
-          setUsername(response.data.name);
-        })
-        .catch(error => {
-          console.error('Error fetching user details:', error);
-          navigate('/login');
-        });
+      return;
     }
+
+    fetchUserDetails();
     fetchDashboardData();
     fetchYearlyProfits();
-  }, [navigate]);
+  }, [navigate, user, tenantId]);
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/user', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Tenant-ID': tenantId,
+        },
+      });
+      setUsername(response.data.name);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      navigate('/login');
+    }
+  };
 
   const fetchDashboardData = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-
     try {
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'X-Tenant-ID': tenantId,
+      };
       const [productsResponse, soldResponse, profitResponse, monthlySalesResponse] = await Promise.all([
         axios.get('http://localhost:5000/products', { headers }),
         axios.get('http://localhost:5000/sold', { headers }),
         axios.get('http://localhost:5000/profits/yearly-all', { headers }),
-        axios.get('http://localhost:5000/profits/monthly', { headers })
+        axios.get('http://localhost:5000/profits/monthly', { headers }),
       ]);
 
       setTotalProducts(productsResponse.data.length);
@@ -51,16 +61,19 @@ const AdminPanel = () => {
       setTotalProfit(profitResponse.data.total_profit || 0);
       setMonthlySales(Array.isArray(monthlySalesResponse.data) ? monthlySalesResponse.data : []);
       setSoldItems(soldResponse.data.soldItems);
-
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
   };
 
   const fetchYearlyProfits = async () => {
-    const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/profits/yearly-all', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/profits/yearly-all', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Tenant-ID': tenantId,
+        },
+      });
       setYearlyProfits(response.data);
     } catch (error) {
       console.error('Error fetching yearly profits:', error);
@@ -77,23 +90,21 @@ const AdminPanel = () => {
           <InfoCard title="Total Sold" value={totalSold} color="bg-yellow-400" />
           {yearlyProfits.map((yearProfit, index) => (
             <InfoCard key={index} title={`Total Profit in ${yearProfit.year}`} value={`GHC ${yearProfit.total_profit.toFixed(2)}`} color="bg-purple-600" />
-              ))}
+          ))}
           <InfoCard title="Monthly Sales" value={monthlySales.length} color="bg-red-600" />
         </div>
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-4">Sold Items</h2>
-          <DataTable 
+          <DataTable
             headers={['Product Type', 'Size', 'Price per Unit', 'Quantity', 'Total Price', 'Date Sold']}
-            data={soldItems.map(item => {
-              return {
-                product_type: item.product_type,
-                size: item.size,
-                price_per_unit: `GHC ${item.price_per_unit}`,
-                quantity: item.quantity,
-                total_price: `GHC ${item.total_price.toFixed(2)}`,
-                date_sold: new Date(item.sale_date).toLocaleDateString(),
-              };
-            })}
+            data={soldItems.map(item => ({
+              product_type: item.product_type,
+              size: item.size,
+              price_per_unit: `GHC ${item.price_per_unit}`,
+              quantity: item.quantity,
+              total_price: `GHC ${item.total_price.toFixed(2)}`,
+              date_sold: new Date(item.sale_date).toLocaleDateString(),
+            }))}
           />
         </div>
       </div>

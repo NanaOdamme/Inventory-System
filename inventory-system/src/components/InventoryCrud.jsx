@@ -1,40 +1,55 @@
+// src/components/InventoryCrud.jsx
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SideMenu from './SideMenu';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { useAuthContext } from '../context/AuthProvider';
 
 const InventoryCrud = () => {
+  const { user, tenantId } = useAuthContext();
   const [username, setUsername] = useState('');
   const [inventory, setInventory] = useState([]);
   const [form, setForm] = useState({ product_type: 'eggs', size: 'small', price_per_unit: '', quantity: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!user || !tenantId) {
       navigate('/login');
-    } else {
-      axios.get('http://localhost:5000/user', { headers: { Authorization: `Bearer ${token}` } })
-        .then(response => {
-          setUsername(response.data.name);
-        })
-        .catch(error => {
-          console.error('Error fetching user details:', error);
-          navigate('/login');
-        });
+      return;
     }
+
+    fetchUserDetails();
     fetchInventory();
-  }, [navigate]);
+  }, [navigate, user, tenantId]);
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/user', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Tenant-ID': tenantId,
+        },
+      });
+      setUsername(response.data.name);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      navigate('/login');
+    }
+  };
 
   const fetchInventory = async () => {
-    const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/inventory', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/inventory', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Tenant-ID': tenantId,
+        },
+      });
       setInventory(response.data);
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -51,9 +66,19 @@ const InventoryCrud = () => {
     const token = localStorage.getItem('token');
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/inventory/${editingId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`http://localhost:5000/inventory/${editingId}`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Tenant-ID': tenantId,
+          },
+        });
       } else {
-        await axios.post('http://localhost:5000/inventory', form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post('http://localhost:5000/inventory', form, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Tenant-ID': tenantId,
+          },
+        });
       }
       setForm({ product_type: 'eggs', size: 'small', price_per_unit: '', quantity: '' });
       setIsEditing(false);
@@ -71,17 +96,22 @@ const InventoryCrud = () => {
     setEditingId(item.id);
     setShowModal(true);
   };
-  
+
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://localhost:5000/inventory/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`http://localhost:5000/inventory/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': tenantId,
+        },
+      });
       fetchInventory();
     } catch (error) {
       console.error('Error deleting inventory:', error);
     }
   };
-  
+
   return (
     <section className="flex">
       <SideMenu username={username} />
@@ -95,47 +125,56 @@ const InventoryCrud = () => {
         </button>
         <div>
           <h2 className="text-2xl font-bold mb-4">Inventory List</h2>
-          <div className="overflow-x-auto mb-20  w-full leading-normal shadow-md rounded-lg">
-        
-          <table className="min-w-full leading-normal shadow-md rounded-lg ">
-            <thead>
-              <tr>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Product Type</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Size</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Price per Unit</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Quantity</th>
-                <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventory.map(item => (
-                <tr key={item.id} className="hover:bg-gray-300">
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.product_type}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.size}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.price_per_unit}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.quantity}</td>
-                  <td className="px-5 py-5 border-b border-gray-800 text-sm">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="m-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="m-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
-                  </td>
+          <div className="overflow-x-auto mb-20 w-full leading-normal shadow-md rounded-lg">
+            <table className="min-w-full leading-normal shadow-md rounded-lg">
+              <thead>
+                <tr>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    Product Type
+                  </th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    Size
+                  </th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    Price per Unit
+                  </th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    Quantity
+                  </th>
+                  <th className="px-5 py-3 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {inventory.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-300">
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.product_type}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.size}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.price_per_unit}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">{item.quantity}</td>
+                    <td className="px-5 py-5 border-b border-gray-800 text-sm">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="m-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="m-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-  
+
       {showModal && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen">
@@ -149,7 +188,9 @@ const InventoryCrud = () => {
               <div className="p-4">
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="product_type">Product Type</label>
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="product_type">
+                      Product Type
+                    </label>
                     <select
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="product_type"
@@ -164,7 +205,9 @@ const InventoryCrud = () => {
                   </div>
                   {form.product_type === 'eggs' && (
                     <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="size">Size</label>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="size">
+                        Size
+                      </label>
                       <select
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="size"
@@ -180,7 +223,9 @@ const InventoryCrud = () => {
                     </div>
                   )}
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price_per_unit">Price per Unit</label>
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price_per_unit">
+                      Price per Unit
+                    </label>
                     <input
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="price_per_unit"
@@ -192,7 +237,9 @@ const InventoryCrud = () => {
                     />
                   </div>
                   <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="quantity">Quantity</label>
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="quantity">
+                      Quantity
+                    </label>
                     <input
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="quantity"
@@ -226,7 +273,7 @@ const InventoryCrud = () => {
       )}
     </section>
   );
-  };
-  
-  export default InventoryCrud;
-  
+};
+
+export default InventoryCrud;
+
