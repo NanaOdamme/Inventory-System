@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const RegisterForm = () => {
-  const [formData, setFormData] = useState({ name: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', password: '', tenantName: '' });
   const [tenantId, setTenantId] = useState(null);
   const navigate = useNavigate();
 
@@ -19,9 +20,20 @@ const RegisterForm = () => {
       const response = await axios.post('http://localhost:5000/register', formData);
       alert('Registration successful! Your Tenant ID is: ' + response.data.tenantId);
       setTenantId(response.data.tenantId);
+      generatePDF(formData.name, formData.tenantName, response.data.tenantId);
+      navigate('/login'); // Navigate to the login form after successful registration
     } catch (error) {
       alert('Registration failed: ' + error.response.data.message);
     }
+  };
+
+  const generatePDF = (username, tenantName, tenantId) => {
+    const doc = new jsPDF();
+    doc.text('Registration Details', 10, 10);
+    doc.text(`Username: ${username}`, 10, 20);
+    doc.text(`Tenant Name: ${tenantName}`, 10, 30);
+    doc.text(`Tenant ID: ${tenantId}`, 10, 40);
+    doc.save('LICENCE.pdf');
   };
 
   return (
@@ -40,6 +52,23 @@ const RegisterForm = () => {
                 id="name"
                 name="name"
                 value={formData.name}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="tenantName" className="block text-gray-700 text-sm font-bold mb-2">
+              Tenant Name
+            </label>
+            <div className="flex items-center">
+              <i className="bi bi-building text-2xl mr-2 text-gray-700"></i>
+              <input
+                type="text"
+                id="tenantName"
+                name="tenantName"
+                value={formData.tenantName}
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required

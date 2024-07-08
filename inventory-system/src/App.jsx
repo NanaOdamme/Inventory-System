@@ -12,6 +12,10 @@ import StockList from './components/StockList';
 import SoldStocks from './components/SoldStocks';
 import MonthlyYearlyProfits from './components/MonthlyYearlyProfits';
 import AuditLogs from './components/AuditLog'
+import ProfilePage from './components/ProfilePage';
+import ReportPage from './components/ReportPage';
+
+
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" />;
@@ -31,6 +35,8 @@ const App = () => (
     <Route path="/admin/sold-stocks" element={<PrivateRoute><SoldStocks /></PrivateRoute>} />
     <Route path="/admin/monthly-yearly-profits" element={<PrivateRoute><MonthlyYearlyProfits /></PrivateRoute>} />
     <Route path="/admin/audit-logs" element={<PrivateRoute><AuditLogs /></PrivateRoute>} />
+    <Route path="/admin/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+    <Route path="/admin/reports" element={<PrivateRoute><ReportPage /></PrivateRoute>} />
   </Routes>
 );
 

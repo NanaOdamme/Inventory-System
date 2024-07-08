@@ -13,7 +13,7 @@ const UsersCrud = () => {
   const [showModal, setShowModal] = useState(false);
 
   const navigate = useNavigate();
-  const { user, tenantId, logout } = useAuthContext();
+  const { user, tenantId, tenantName, logout } = useAuthContext();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -26,7 +26,12 @@ const UsersCrud = () => {
 
   const fetchUsers = async (token, tenantId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/users?tenantId=${tenantId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('http://localhost:5000/users', {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': tenantId // Ensure to use the correct header
+        }
+      });
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -52,10 +57,21 @@ const UsersCrud = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
+      const formData = { ...form, tenantId, tenantName }; // Include tenantId and tenantName
       if (isEditing) {
-        await axios.put(`http://localhost:5000/users/${editingId}?tenantId=${tenantId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`http://localhost:5000/users/${editingId}`, formData, { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'X-Tenant-ID': tenantId // Ensure to use the correct header
+          }
+        });
       } else {
-        await axios.post(`http://localhost:5000/users?tenantId=${tenantId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post('http://localhost:5000/users', formData, { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'X-Tenant-ID': tenantId // Ensure to use the correct header
+          }
+        });
       }
       setForm({ name: '', password: '', modules: [] });
       setIsEditing(false);
@@ -77,7 +93,12 @@ const UsersCrud = () => {
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://localhost:5000/users/${id}?tenantId=${tenantId}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`http://localhost:5000/users/${id}`, { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': tenantId // Ensure to use the correct header
+        }
+      });
       fetchUsers(token, tenantId);
     } catch (error) {
       console.error('Error deleting user:', error);

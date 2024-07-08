@@ -23,7 +23,7 @@ db.connect(err => {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Middleware to extract tenant ID from JWT token
+// Middleware to extract tenant ID and tenant name from JWT token
 const tenantMiddleware = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
@@ -40,6 +40,7 @@ const tenantMiddleware = (req, res, next) => {
       return res.status(401).send({ message: 'Failed to authenticate token' });
     }
     req.tenantId = decoded.tenant_id;
+    req.tenantName = decoded.tenant_name;
     req.userId = decoded.id;
 
     // Fetch user modules and add to request
@@ -54,6 +55,7 @@ const tenantMiddleware = (req, res, next) => {
     });
   });
 };
+
 
 const generateTenantId = () => {
   return 'tenant_' + Math.random().toString(36).substr(2, 9);
@@ -122,41 +124,43 @@ const auditLog = (userId, tenantId, action, details) => {
 
 // Register a new user (Admin only)
 app.post('/register', (req, res) => {
-  const { name, password } = req.body;
+  const { name, password, tenantName } = req.body; // Include tenantName
   const tenantId = generateTenantId();
   const hashedPassword = bcrypt.hashSync(password, 10);
   const modules = JSON.stringify(['Register', 'Dashboard', 'Products', 'Manage Inventory', 'Manage Stocks', 'All Stocks', 'Sold Stocks', 'Monthly & Yearly Profits', 'Users', 'Audit Logs']); // Default modules for admin
   const userType = 'admin';
-  const sql = 'INSERT INTO users (name, password, tenant_id, modules, user_type) VALUES (?, ?, ?, ?, ?)';
-  db.query(sql, [name, hashedPassword, tenantId, modules, userType], (err, result) => {
+  const sql = 'INSERT INTO users (name, password, tenant_id, tenantName, modules, user_type) VALUES (?, ?, ?, ?, ?, ?)'; // Include tenantName
+  db.query(sql, [name, hashedPassword, tenantId, tenantName, modules, userType], (err, result) => {
     if (err) {
       console.error(err);
       return res.status(500).send({ message: 'Error registering user' });
     }
-    res.send({ message: 'User registered successfully', tenantId });
+    res.send({ message: 'User registered successfully', tenantId, tenantName });
   });
 });
 
+
+
 // Login
 app.post('/login', (req, res) => {
-  const { tenantId, name, password } = req.body;
-  const sql = 'SELECT * FROM users WHERE name = ? AND tenant_id = ?';
-  db.query(sql, [name, tenantId], (err, result) => {
+  const { tenantName, name, password } = req.body;
+  const sql = 'SELECT * FROM users WHERE name = ? AND tenantName = ?';
+  db.query(sql, [name, tenantName], (err, result) => {
     if (err) throw err;
     if (result.length === 0) {
       return res.status(400).send({ message: 'Invalid credentials' });
     }
     const user = result[0];
-    console.log('User found:', user); // Log user details
     const isValidPassword = bcrypt.compareSync(password, user.password);
     if (!isValidPassword) {
       return res.status(400).send({ message: 'Invalid credentials' });
     }
-    const token = jwt.sign({ id: user.id, tenant_id: user.tenant_id }, JWT_SECRET, { expiresIn: '1h' });
-    res.send({ token, tenantId: user.tenant_id });
-    
+    const token = jwt.sign({ id: user.id, tenant_id: user.tenant_id, tenant_name: user.tenantName }, JWT_SECRET, { expiresIn: '1h' });
+    res.send({ token, tenantId: user.tenant_id, tenantName: user.tenantName });
   });
 });
+
+
 
 
 
@@ -187,13 +191,15 @@ app.post('/users', [authMiddleware, tenantMiddleware], (req, res) => {
   const { name, password, modules } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userType = 'regular'; // New users added by admin are regular users
-  const sql = 'INSERT INTO users (name, password, tenant_id, modules, user_type) VALUES (?, ?, ?, ?, ?)';
-  db.query(sql, [name, hashedPassword, req.tenantId, JSON.stringify(modules), userType], (err, result) => {
+  const sql = 'INSERT INTO users (name, password, tenant_id, tenantName, modules, user_type) VALUES (?, ?, ?, ?, ?, ?)';
+  db.query(sql, [name, hashedPassword, req.tenantId, req.tenantName, JSON.stringify(modules), userType], (err, result) => {
     if (err) throw err;
     auditLog(req.userId, req.tenantId, 'ADD_USER', `Added user ${name}`);
     res.send({ message: 'User added successfully' });
   });
 });
+
+
 
 app.put('/users/:id', [authMiddleware, tenantMiddleware], (req, res) => {
   const { id } = req.params;
@@ -451,6 +457,106 @@ app.get('/audit-logs', [authMiddleware, tenantMiddleware, moduleMiddleware('Audi
     res.send(result);
   });
 });
+
+// Save or update profile
+app.post('/profile', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { company_name, address, contact_email, contact_phone } = req.body;
+  const { tenantId, tenantName } = req;
+
+  const sql = `
+    INSERT INTO profiles (tenant_id, tenant_name, company_name, address, contact_email, contact_phone)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE company_name = ?, address = ?, contact_email = ?, contact_phone = ?
+  `;
+  db.query(sql, [tenantId, tenantName, company_name, address, contact_email, contact_phone, company_name, address, contact_email, contact_phone], (err, result) => {
+    if (err) {
+      console.error('Error saving profile:', err);
+      return res.status(500).send({ message: 'Error saving profile' });
+    }
+    res.send({ message: 'Profile saved successfully' });
+  });
+});
+
+// Get profile
+app.get('/profile', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { tenantId, tenantName } = req;
+
+  const sql = 'SELECT * FROM profiles WHERE tenant_id = ? AND tenant_name = ?';
+  db.query(sql, [tenantId, tenantName], (err, result) => {
+    if (err) {
+      console.error('Error fetching profile:', err);
+      return res.status(500).send({ message: 'Error fetching profile' });
+    }
+    res.send(result[0] || {});
+  });
+});
+
+// Delete profile
+app.delete('/profile', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { tenantId, tenantName } = req;
+
+  const sql = 'DELETE FROM profiles WHERE tenant_id = ? AND tenant_name = ?';
+  db.query(sql, [tenantId, tenantName], (err, result) => {
+    if (err) {
+      console.error('Error deleting profile:', err);
+      return res.status(500).send({ message: 'Error deleting profile' });
+    }
+    res.send({ message: 'Profile deleted successfully' });
+  });
+});
+
+// Get daily report
+app.get('/report/daily', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { tenantId } = req;
+  const sql = `
+    SELECT product_type, size, price_per_unit, quantity, total_price, sale_date
+    FROM sold
+    WHERE tenant_id = ? AND DATE(sale_date) = CURDATE()
+  `;
+  db.query(sql, [tenantId], (err, result) => {
+    if (err) {
+      console.error('Error fetching daily report:', err);
+      return res.status(500).send({ message: 'Error fetching daily report' });
+    }
+    res.send(result);
+  });
+});
+
+// Get monthly report
+app.get('/report/monthly', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { tenantId } = req;
+  const sql = `
+    SELECT product_type, size, price_per_unit, quantity, total_price, sale_date
+    FROM sold
+    WHERE tenant_id = ? AND MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE())
+  `;
+  db.query(sql, [tenantId], (err, result) => {
+    if (err) {
+      console.error('Error fetching monthly report:', err);
+      return res.status(500).send({ message: 'Error fetching monthly report' });
+    }
+    res.send(result);
+  });
+});
+
+// Get historical report
+app.get('/report/historical', [authMiddleware, tenantMiddleware], (req, res) => {
+  const { tenantId } = req;
+  const { year, month } = req.query;
+  const sql = `
+    SELECT product_type, size, price_per_unit, quantity, total_price, sale_date
+    FROM sold
+    WHERE tenant_id = ? AND YEAR(sale_date) = ? AND MONTH(sale_date) = ?
+  `;
+  db.query(sql, [tenantId, year, month], (err, result) => {
+    if (err) {
+      console.error('Error fetching historical report:', err);
+      return res.status(500).send({ message: 'Error fetching historical report' });
+    }
+    res.send(result);
+  });
+});
+
 
 
 const PORT = 5000;

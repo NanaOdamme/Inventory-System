@@ -4,13 +4,16 @@ import axios from 'axios';
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [tenantId, setTenantId] = useState(null);
+  const [tenantName, setTenantName] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const tenantId = localStorage.getItem('tenantId');
+    const tenantName = localStorage.getItem('tenantName');
 
-    if (token && tenantId) {
+    if (token && tenantId && tenantName) {
       setTenantId(tenantId);
+      setTenantName(tenantName);
       fetchUser(token, tenantId);
     }
   }, []);
@@ -24,7 +27,6 @@ export const useAuth = () => {
         },
       });
       const userData = response.data;
-      console.log('Fetched user:', userData);
       userData.modules = JSON.parse(userData.modules); // Parse the modules field
       setUser(userData);
     } catch (error) {
@@ -33,13 +35,16 @@ export const useAuth = () => {
     }
   };
 
-  const login = async (tenantId, name, password) => {
+  const login = async (tenantName, name, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/login', { tenantId, name, password });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('tenantId', response.data.tenantId);
-      setTenantId(response.data.tenantId);
-      await fetchUser(response.data.token, response.data.tenantId);
+      const response = await axios.post('http://localhost:5000/login', { tenantName, name, password });
+      const { token, tenantId } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('tenantId', tenantId);
+      localStorage.setItem('tenantName', tenantName);
+      setTenantId(tenantId);
+      setTenantName(tenantName);
+      await fetchUser(token, tenantId);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -49,13 +54,16 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('tenantId');
+    localStorage.removeItem('tenantName');
     setUser(null);
     setTenantId(null);
+    setTenantName(null);
   };
 
   return {
     user,
     tenantId,
+    tenantName,
     login,
     logout,
   };

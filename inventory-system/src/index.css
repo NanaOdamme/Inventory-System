@@ -23,3 +23,19 @@
     border-radius: 10px;
     border: 2px solid #ffffff; /* Adjust border width to create extra thin scrollbar */
   }
+
+  
+ 
+  @media (min-width: 768px) {
+    .chart-container {
+      height: 400px; /* Reduced height for larger screens */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .chart-container {
+      height: 450px; /* Further reduced height for even larger screens */
+    
+    } 
+  }
+  

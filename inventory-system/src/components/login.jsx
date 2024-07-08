@@ -4,7 +4,7 @@ import { useAuthContext } from '../context/AuthProvider';
 
 export const LoginForm = () => {
   const { login } = useAuthContext();
-  const [formData, setFormData] = useState({ tenantId: '', name: '', password: '' });
+  const [formData, setFormData] = useState({ tenantName: '', name: '', password: '' });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,7 +15,7 @@ export const LoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(formData.tenantId, formData.name, formData.password);
+      await login(formData.tenantName, formData.name, formData.password);
       navigate('/admin');
     } catch (error) {
       console.error('Login error:', error);
@@ -29,12 +29,12 @@ export const LoginForm = () => {
         <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Login</h1>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="tenantId" className="block text-gray-700 text-sm font-bold mb-2">Tenant ID</label>
+            <label htmlFor="tenantName" className="block text-gray-700 text-sm font-bold mb-2">Tenant Name</label>
             <input
               type="text"
-              id="tenantId"
-              name="tenantId"
-              value={formData.tenantId}
+              id="tenantName"
+              name="tenantName"
+              value={formData.tenantName}
               onChange={handleChange}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
@@ -77,3 +77,4 @@ export const LoginForm = () => {
     </div>
   );
 };
+

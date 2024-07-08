@@ -48,6 +48,9 @@ const SideMenu = ({ username }) => {
                 <i className="bi bi-speedometer2 mr-2"></i> Dashboard
               </Link>
             )}
+             <Link to="/admin/profile" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-person mr-2"></i> Profile
+              </Link>
             {hasAccess('Products') && (
               <Link to="/admin/products" className="hover:bg-green-700 p-2 rounded flex items-center">
                 <i className="bi bi-box-seam mr-2"></i> Products
@@ -105,6 +108,11 @@ const SideMenu = ({ username }) => {
                 <i className="bi bi-clipboard-data mr-2"></i> Audit Logs
               </Link>
             )}
+            
+              <Link to="/admin/reports" className="hover:bg-green-700 p-2 rounded flex items-center">
+                <i className="bi bi-clipboard-data mr-2"></i> Reports
+              </Link>
+            
             <button onClick={handleLogout} className="hover:bg-green-700 p-2 rounded text-left flex items-center">
               <i className="bi bi-box-arrow-right mr-2"></i> Logout
             </button>
